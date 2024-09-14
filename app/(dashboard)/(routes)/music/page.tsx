@@ -145,7 +145,7 @@ function Musicpage() {
             <div className="mt-4">
               <AudioPlayer
                 src={musicUrl}
-                onPlay={e => console.log("Playing")}
+                onPlay={() => console.log('playing')}
                 className="w-full" 
               />
             </div>

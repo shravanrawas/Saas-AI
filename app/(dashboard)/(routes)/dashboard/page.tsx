@@ -2,7 +2,6 @@
 
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
-import { UserButton } from '@clerk/nextjs'
 import { ArrowRight, Code, ImageIcon, MessageSquare, MusicIcon, VideoIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React from 'react'

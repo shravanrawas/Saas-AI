@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Heading from '@/components/heading';
-import { Settings, SubscriptIcon } from 'lucide-react';
+import { SubscriptIcon } from 'lucide-react';
 
 function Settingspage() {
   const { user } = useUser();

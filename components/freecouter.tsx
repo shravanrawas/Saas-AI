@@ -12,14 +12,13 @@ import { userpromodal } from '@/hooks/user-pro-modal';
 function FreeCounter() {
     const [mounted, setMounted] = useState(false);
     const [apiCount, setApiCount] = useState(0);
-    const [isAllowed, setIsAllowed] = useState(true);
     const promodal = userpromodal();
 
     useEffect(() => {
         const fetchApiLimit = async () => {
             const { isAllowed, count = 0 } = await checkApiLimit();
             setApiCount(count);
-            setIsAllowed(isAllowed);
+            
         }
 
         setMounted(true);

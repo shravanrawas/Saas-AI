@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import prismadb from "@/lib/prismadb";
 import { MAX_FREE_COUNTS } from "@/constansts";
 
-export async function GET(req: Request) {
+export async function GET() {
   const { userId } = auth();
 
   if (!userId) {
@@ -21,3 +21,4 @@ export async function GET(req: Request) {
     { status: 200 }
   );
 }
+

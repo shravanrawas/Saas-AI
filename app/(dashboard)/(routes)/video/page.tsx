@@ -128,6 +128,7 @@ function Videopage() {
       }
     } catch (err) {
       setError('An error occurred while generating the video');
+      console.log(err);
       setIsLoading(false);
     }
   };

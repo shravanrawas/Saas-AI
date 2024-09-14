@@ -72,7 +72,7 @@ function Codepage() {
     }
   }, [user]);
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data: any) => {
     setIsLoading(true);
     try {
       if (!subscriptionActive) {

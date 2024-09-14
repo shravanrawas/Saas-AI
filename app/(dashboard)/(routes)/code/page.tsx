@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,17 +13,20 @@ import Loader from '@/components/loader';
 import { cn } from '@/lib/utils';
 import { useUser } from '@clerk/nextjs';
 import Typewriter from 'typewriter-effect';
-import { increaseApiLimit , checkApiLimit} from '@/lib/api';
+import { increaseApiLimit, checkApiLimit } from '@/lib/api';
 import { userpromodal } from '@/hooks/user-pro-modal';
 
+interface Conversation {
+  type: 'user' | 'ai';
+  message: string;
+}
 
 function Codepage() {
-  const [conversation, setConversation] = useState([]);
+  const [conversation, setConversation] = useState<Conversation[]>([]); 
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
   const promodal = userpromodal();
   const [subscriptionActive, setSubscriptionActive] = useState(false);
-
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -35,7 +36,6 @@ function Codepage() {
   });
 
   const chatEndRef = useRef(null);
-
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_KEY;
   const genAI = new GoogleGenerativeAI(apiKey ?? '');
 
@@ -85,15 +85,12 @@ function Codepage() {
         increaseApiLimit();
       }
 
-
-      const newConversation = [...conversation, { type: 'user', message: data.prompt }];
+      const newConversation: Conversation[] = [...conversation, { type: 'user', message: data.prompt }];
 
       const chatSession = model.startChat({
         generationConfig,
         history: [],
       });
-
-
 
       const result = await chatSession.sendMessage(data.prompt);
       const aiResponse = await result.response.text();
@@ -105,7 +102,6 @@ function Codepage() {
       console.error('Error fetching chat response:', error);
     }
   };
-
 
   useEffect(() => {
     if (conversation.length > 2 && chatEndRef.current) {

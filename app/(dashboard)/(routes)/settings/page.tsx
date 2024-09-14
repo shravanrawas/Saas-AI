@@ -23,8 +23,6 @@ function Settingspage() {
         } catch (error) {
           console.error('Error fetching subscription status:', error);
           setSubscriptionActive(false);
-        } finally {
-          
         }
       };
 

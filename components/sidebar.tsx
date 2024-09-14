@@ -7,7 +7,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   LayoutDashboard,
-  Settings,
   CodeIcon,
   MessageSquare,
   ImageIcon,
@@ -69,7 +68,6 @@ function Sidebar({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
   const { user } = useUser();
   const [subscriptionActive, setSubscriptionActive] = useState(false);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -85,9 +83,7 @@ function Sidebar({ onClose }: { onClose: () => void }) {
         } catch (error) {
           console.error('Error fetching subscription status:', error);
           setSubscriptionActive(false);
-        } finally {
-          setLoading(false);
-        }
+        } 
       };
 
       fetchSubscriptionStatus();
@@ -125,7 +121,6 @@ function Sidebar({ onClose }: { onClose: () => void }) {
         </div>
       </div>
 
-      {/* Conditionally render Freecouter if subscription is not active */}
       {!subscriptionActive && <Freecouter />}
     </div>
   );

@@ -16,7 +16,7 @@ function FreeCounter() {
 
     useEffect(() => {
         const fetchApiLimit = async () => {
-            const { isAllowed, count = 0 } = await checkApiLimit();
+            const { count = 0 } = await checkApiLimit();
             setApiCount(count);
             
         }

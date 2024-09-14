@@ -8,7 +8,6 @@ import { SubscriptIcon } from 'lucide-react';
 function Settingspage() {
   const { user } = useUser();
   const [subscriptionActive, setSubscriptionActive] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -25,7 +24,7 @@ function Settingspage() {
           console.error('Error fetching subscription status:', error);
           setSubscriptionActive(false);
         } finally {
-          setLoading(false);
+          
         }
       };
 

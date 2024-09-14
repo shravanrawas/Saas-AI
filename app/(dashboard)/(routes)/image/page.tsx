@@ -15,10 +15,17 @@ import Loader from '@/components/loader';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { SelectValue } from '@radix-ui/react-select';
 import { Card, CardFooter } from '@/components/ui/card';
+import { increaseApiLimit , checkApiLimit} from '@/lib/api';
+import { userpromodal } from '@/hooks/user-pro-modal';
+import { useUser } from '@clerk/nextjs';
+import { useEffect } from 'react';
 
 function Imagepage() {
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { user } = useUser();
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const promodal = userpromodal();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -30,9 +37,40 @@ function Imagepage() {
   });
 
   const hf = new HfInference(process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY);
+  
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const res = await fetch(`/api/subscription/${user?.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSubscriptionActive(data.subscriptionActive);
+        } else {
+          setSubscriptionActive(false);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription status:', error);
+        setSubscriptionActive(false);
+      }
+    };
+
+    if (user) {
+      fetchSubscriptionStatus();
+    }
+  }, [user]);
 
   const onSubmit = async (data: any) => {
     try {
+      if (!subscriptionActive) {
+        const isLimitValid = (await checkApiLimit()).isAllowed;
+        if (!isLimitValid) {
+          promodal.onOpen();
+          setIsLoading(false);
+          return;
+        }
+        increaseApiLimit();
+      }
+
       setIsLoading(true);
       const newImages = [];
 

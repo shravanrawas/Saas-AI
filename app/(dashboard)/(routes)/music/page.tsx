@@ -13,6 +13,10 @@ import Empty from '@/components/empty';
 import Loader from '@/components/loader';
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
+import { increaseApiLimit , checkApiLimit} from '@/lib/api';
+import { userpromodal } from '@/hooks/user-pro-modal';
+import { useUser } from '@clerk/nextjs';
+import { useEffect } from 'react';
 
 
 const API_ENDPOINT = 'https://api-inference.huggingface.co/models/facebook/musicgen-small';
@@ -20,6 +24,9 @@ const API_ENDPOINT = 'https://api-inference.huggingface.co/models/facebook/music
 function Musicpage() {
   const [musicUrl, setMusicUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const promodal = userpromodal();
+  const { user } = useUser();
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -28,10 +35,41 @@ function Musicpage() {
     },
   });
 
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const res = await fetch(`/api/subscription/${user?.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSubscriptionActive(data.subscriptionActive);
+        } else {
+          setSubscriptionActive(false);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription status:', error);
+        setSubscriptionActive(false);
+      }
+    };
+
+    if (user) {
+      fetchSubscriptionStatus();
+    }
+  }, [user]);
+
   const onSubmit = async (data: any) => {
     setIsLoading(true);
 
     try {
+      if (!subscriptionActive) {
+        const isLimitValid = (await checkApiLimit()).isAllowed;
+        if (!isLimitValid) {
+          promodal.onOpen();
+          setIsLoading(false);
+          return;
+        }
+        increaseApiLimit();
+      }
+      
       const response = await fetch(API_ENDPOINT, {
         headers: {
           'Authorization': `Bearer ${process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY}`,

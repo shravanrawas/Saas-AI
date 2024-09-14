@@ -1,27 +1,29 @@
 'use client';
 
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Replicate from 'replicate'; 
+import { VideoIcon } from 'lucide-react';
 import Heading from '@/components/heading';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { VideoIcon } from 'lucide-react';
 import { formSchema } from './constanst';
 import Empty from '@/components/empty';
 import Loader from '@/components/loader';
-
-const replicate = new Replicate({
-  auth: process.env.NEXT_PUBLIC_REPLICATE_API_TOKEN,
-});
+import { increaseApiLimit , checkApiLimit} from '@/lib/api';
+import { userpromodal } from '@/hooks/user-pro-modal';
+import { useUser } from '@clerk/nextjs';
+import { useEffect } from 'react';
 
 function Videopage() {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+  const { user } = useUser();
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const promodal = userpromodal();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -30,42 +32,114 @@ function Videopage() {
     },
   });
 
-  const onSubmit = async (data: any) => {
+  const pollForVideo = async (videoId: string) => {
+    const pollingInterval = 5000;
+    let videoGenerated = false;
+
+    while (!videoGenerated) {
+      const response = await fetch(`https://tavusapi.com/v2/videos/${videoId}`, {
+        headers: {
+          'x-api-key': `${process.env.NEXT_PUBLIC_TAVUS_API_KEY}`,
+        },
+      });
+
+      const result = await response.json();
+      console.log(result);
+
+      if (response.ok) {
+        if (result.generation_progress === '100/100') {
+          const downloadUrl = result.download_url;
+
+          const videoBlob = await fetch(downloadUrl).then(res => res.blob());
+          const videoBlobUrl = URL.createObjectURL(videoBlob);
+
+          setVideoUrl(videoBlobUrl);
+          videoGenerated = true;
+        } else {
+          setProgress(result.generation_progress);
+          await new Promise(resolve => setTimeout(resolve, pollingInterval));
+        }
+      } else {
+        setError(result.message || 'Failed to retrieve video status');
+        videoGenerated = true;
+      }
+    }
+
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    const fetchSubscriptionStatus = async () => {
+      try {
+        const res = await fetch(`/api/subscription/${user?.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSubscriptionActive(data.subscriptionActive);
+        } else {
+          setSubscriptionActive(false);
+        }
+      } catch (error) {
+        console.error('Error fetching subscription status:', error);
+        setSubscriptionActive(false);
+      }
+    };
+
+    if (user) {
+      fetchSubscriptionStatus();
+    }
+  }, [user]);
+
+  const onSubmit = async (data: { prompt: string }) => {
     setIsLoading(true);
     setError(null);
     setVideoUrl(null);
-
-    const input = {
-      fps: 24,
-      width: 1024,
-      height: 576,
-      prompt: data.prompt,
-      guidance_scale: 17.5,
-      negative_prompt: "very blue, dust, noisy, washed out, ugly, distorted, broken",
-    };
+    setProgress(null);
 
     try {
-      const output = await replicate.run(
-        "anotherjesse/zeroscope-v2-xl:9f747673945c62801b13b84701c783929c0ee784e4748ec062204894dda1a351",
-        { input }
-      );
-      setVideoUrl(output);
+      if (!subscriptionActive) {
+        const isLimitValid = (await checkApiLimit()).isAllowed;
+        if (!isLimitValid) {
+          promodal.onOpen();
+          setIsLoading(false);
+          return;
+        }
+        increaseApiLimit();
+      }
+      
+      const response = await fetch('https://tavusapi.com/v2/videos', {
+        method: 'POST',
+        headers: {
+          'x-api-key': `${process.env.NEXT_PUBLIC_TAVUS_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          replica_id: 'r79e1c033f',
+          script: data.prompt,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        await pollForVideo(result.video_id);
+      } else {
+        setError(result.message || 'Failed to generate video');
+        setIsLoading(false);
+      }
     } catch (err) {
-      console.error('Error generating video:', err.message);
-      setError(`Error generating video: ${err.message}`);
-    } finally {
+      setError('An error occurred while generating the video');
       setIsLoading(false);
     }
   };
 
   return (
     <div>
-      <Heading 
-        title="Video Generation" 
-        description="Generate videos from text prompts" 
-        icon={VideoIcon} 
-        iconColor="text-orange-500" 
-        bgColor="bg-orange-500/10" 
+      <Heading
+        title="Video Generation"
+        description="Generate videos from text script"
+        icon={VideoIcon}
+        iconColor="text-orange-500"
+        bgColor="bg-orange-500/10"
       />
       <div className="px-4 lg:px-8">
         <Form {...form}>
@@ -73,18 +147,21 @@ function Videopage() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="rounded-lg border w-full p-4 px-3 md:px-6 focus-within:shadow-sm grid grid-cols-12 gap-2"
           >
-            <FormField name="prompt" render={({ field }) => (
-              <FormItem className="col-span-12 lg:col-span-10">
-                <FormControl className="m-0 p-0">
-                  <Input 
-                    className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
-                    placeholder="Enter text prompt..." 
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}/>
-            <Button 
+            <FormField
+              name="prompt"
+              render={({ field }) => (
+                <FormItem className="col-span-12 lg:col-span-10">
+                  <FormControl className="m-0 p-0">
+                    <Input
+                      className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
+                      placeholder="Enter text script..."
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <Button
               type="submit"
               className="col-span-12 lg:col-span-2 w-full"
               disabled={isLoading}
@@ -95,14 +172,15 @@ function Videopage() {
         </Form>
 
         <div className="space-y-4 mt-4">
-          {isLoading && (
+          {isLoading && !videoUrl && !error && (
             <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted">
-              <Loader text={'Generating...'}/>
+              {!progress && <Loader text={'Generating...'} />}
+              {progress && <p>Video creation is in progress. Update: {progress}</p>}
             </div>
           )}
           {error && !isLoading && (
             <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted text-red-500">
-              <p>{error}</p>
+              {error} - API limit is exhausted.
             </div>
           )}
           {!videoUrl && !isLoading && !error && (
@@ -110,7 +188,16 @@ function Videopage() {
           )}
           {videoUrl && (
             <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted">
-              <video src={videoUrl} alt="Generated video" controls />
+              <video
+                src={videoUrl}
+                controls
+                width="100%"
+                height="auto"
+                preload="auto"
+                onError={() => setError('Failed to load video')}
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
           )}
         </div>

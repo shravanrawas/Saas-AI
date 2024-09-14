@@ -1,12 +1,23 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Montserrat } from 'next/font/google';
 import Image from 'next/image';
 import Link from 'next/link';
-import React from 'react';
-import { LayoutDashboard, Settings, CodeIcon, MessageSquare, ImageIcon, VideoIcon, MusicIcon } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Settings,
+  CodeIcon,
+  MessageSquare,
+  ImageIcon,
+  VideoIcon,
+  MusicIcon,
+  SubscriptIcon,
+} from 'lucide-react';
 import { usePathname } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import Freecouter from './freecouter';
 
 const montserrat = Montserrat({ weight: '600', subsets: ['latin'] });
 
@@ -48,14 +59,41 @@ const routes = [
     color: 'text-green-700',
   },
   {
-    label: 'Settings',
-    icon: Settings,
+    label: 'Subscription Status',
+    icon: SubscriptIcon,
     href: '/settings',
   },
 ];
 
 function Sidebar({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
+  const { user } = useUser();
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      const fetchSubscriptionStatus = async () => {
+        try {
+          const res = await fetch(`/api/subscription/${user.id}`);
+          if (res.ok) {
+            const data = await res.json();
+            setSubscriptionActive(data.subscriptionActive);
+          } else {
+            setSubscriptionActive(false);
+          }
+        } catch (error) {
+          console.error('Error fetching subscription status:', error);
+          setSubscriptionActive(false);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchSubscriptionStatus();
+    }
+  }, [user]);
+
 
   return (
     <div className='space-y-4 py-4 flex flex-col h-full bg-[#111827]'>
@@ -86,6 +124,9 @@ function Sidebar({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       </div>
+
+      {/* Conditionally render Freecouter if subscription is not active */}
+      {!subscriptionActive && <Freecouter />}
     </div>
   );
 }

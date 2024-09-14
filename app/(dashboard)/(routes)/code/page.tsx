@@ -37,7 +37,7 @@ function Codepage() {
     },
   });
 
-  const chatEndRef = useRef(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_KEY;
   const genAI = new GoogleGenerativeAI(apiKey ?? '');
 

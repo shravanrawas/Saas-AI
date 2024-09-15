@@ -2,7 +2,7 @@
 
 SaaS AI Platform! This project is a cutting-edge application built with Next.js, Prisma, Shadcn, Stripe, PostgreSQL, and Crisp. The platform offers multiple AI-powered modules including image generation, video generation, music generation, and conversation capabilities.
 
-Demo: https://resume-builder-frontend-kappa.vercel.app/
+Demo: https://saas-ai-liard.vercel.app/
 
 ## Features
 
@@ -42,7 +42,31 @@ If you’d like to contribute to this project, please follow these steps:
   - Create a new Pull Request.
    
 
+1. **Clone the Repository:**
+   
+   ```bash
+   git clone <repository-url>
+   cd <repository-directory>
 
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+## Contact
+For any questions or support, please contact shravanrawas8@gmail.com or reach out via Crisp.
 
 
 

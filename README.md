@@ -9,7 +9,7 @@ Demo: https://saas-ai-liard.vercel.app/
   - Image Generation: Create stunning images based on your input parameters.
   - Video Generation: Generate dynamic and engaging videos with ease.
   - Music Generation: Produce unique and original music tracks.
-  - Conversation: Engage in intelligent conversations powered by OpenAI's GPT-3.5-turbo model.
+  - Conversation: Engage in intelligent conversations powered by Gemini AI.
   - Customer Support: Integrated support via Crisp for seamless customer interaction.
 
 ## Technologies Used

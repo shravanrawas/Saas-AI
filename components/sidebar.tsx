@@ -98,7 +98,7 @@ function Sidebar({ onClose }: { onClose: () => void }) {
           <div className='relative w-8 h-8 mr-4'>
             <Image fill alt='logo' src={'/logo.svg'} />
           </div>
-          <h1 className={cn(`text-2xl font-bold`, montserrat.className)}>Creatix</h1>
+          <h1 className={cn(`text-2xl font-bold text-white`, montserrat.className)}>Creatix</h1>
         </Link>
 
         <div className='space-y-1'>

@@ -8,10 +8,7 @@
   "rules": {
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/ban-ts-comment": "off",
-    "react/display-name": "off"
+    "react/display-name": "off",
+    "no-var": "error" 
   }
 }
-
-
-
-

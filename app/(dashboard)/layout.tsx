@@ -10,7 +10,7 @@ async function Dashboardlayout({children} : {children: React.ReactNode}) {
 
          <div className='hidden h-full md:flex md:w-72 md:flex-col md:fixed md:inset-y-0 bg-gray-900'>
               <div>
-                <Sidebar/>
+                <Sidebar onClose={() => {}}/>
               </div>
          </div>
 
@@ -23,4 +23,4 @@ async function Dashboardlayout({children} : {children: React.ReactNode}) {
   )
 }
 
-export default Dashboardlayout
+export default Dashboardlayout;

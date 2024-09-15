@@ -20,17 +20,24 @@ import { SubmitHandler } from 'react-hook-form';
 import { z } from 'zod';
 
 
+type ConversationMessage = {
+  type: 'user' | 'ai';
+  message: string;
+};
+
 function Conversationpage() {
-  const [conversation, setConversation] = useState([]);
+
+  const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const promodal = userpromodal();
-  const chatEndRef = useRef(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
 
   type FormData = z.infer<typeof formSchema>;
 
-  const form = useForm({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       prompt: '',
@@ -56,6 +63,7 @@ function Conversationpage() {
     maxOutputTokens: 8192,
     responseMimeType: "text/plain",
   };
+
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -90,22 +98,22 @@ function Conversationpage() {
         }
         increaseApiLimit();
       }
-  
-      const userMessage = { type: 'user', message: data.prompt };
+
+      const userMessage: ConversationMessage = { type: 'user', message: data.prompt };
       const newConversation = [...conversation, userMessage];
       setConversation(newConversation);
-  
+
       const chatSession = model.startChat({
         generationConfig,
         history: [],
       });
-  
+
       const result = await chatSession.sendMessage(data.prompt);
       const aiResponse = await result.response.text();
-  
-      const aiMessage = { type: 'ai', message: aiResponse };
+
+      const aiMessage: ConversationMessage = { type: 'ai', message: aiResponse };
       setConversation((prev) => [...prev, aiMessage]);
-  
+
       setIsLoading(false);
       form.reset();
     } catch (error) {
@@ -113,7 +121,7 @@ function Conversationpage() {
       setIsLoading(false);
     }
   };
-  
+
 
   useEffect(() => {
     if (conversation.length >= 2 && chatEndRef.current) {

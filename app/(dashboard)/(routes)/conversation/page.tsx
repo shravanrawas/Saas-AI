@@ -16,6 +16,7 @@ import { useUser } from '@clerk/nextjs';
 import Typewriter from 'typewriter-effect';
 import { increaseApiLimit, checkApiLimit } from '@/lib/api';
 import { userpromodal } from '@/hooks/user-pro-modal';
+import { SubmitHandler } from 'react-hook-form';
 
 function Conversationpage() {
   const [conversation, setConversation] = useState([]);
@@ -24,6 +25,8 @@ function Conversationpage() {
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const promodal = userpromodal();
   const chatEndRef = useRef(null);
+
+  type FormData = z.infer<typeof formSchema>;
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -73,7 +76,7 @@ function Conversationpage() {
     }
   }, [user]);
 
-  const onSubmit = async (data) => {
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
     try {
       if (!subscriptionActive) {
@@ -85,24 +88,22 @@ function Conversationpage() {
         }
         increaseApiLimit();
       }
-
   
       const userMessage = { type: 'user', message: data.prompt };
       const newConversation = [...conversation, userMessage];
       setConversation(newConversation);
-
-      
+  
       const chatSession = model.startChat({
         generationConfig,
         history: [],
       });
-
+  
       const result = await chatSession.sendMessage(data.prompt);
       const aiResponse = await result.response.text();
-
+  
       const aiMessage = { type: 'ai', message: aiResponse };
       setConversation((prev) => [...prev, aiMessage]);
-
+  
       setIsLoading(false);
       form.reset();
     } catch (error) {
@@ -110,6 +111,7 @@ function Conversationpage() {
       setIsLoading(false);
     }
   };
+  
 
   useEffect(() => {
     if (conversation.length >= 2 && chatEndRef.current) {

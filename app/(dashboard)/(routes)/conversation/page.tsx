@@ -17,6 +17,8 @@ import Typewriter from 'typewriter-effect';
 import { increaseApiLimit, checkApiLimit } from '@/lib/api';
 import { userpromodal } from '@/hooks/user-pro-modal';
 import { SubmitHandler } from 'react-hook-form';
+import { z } from 'zod';
+
 
 function Conversationpage() {
   const [conversation, setConversation] = useState([]);

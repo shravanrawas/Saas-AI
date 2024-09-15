@@ -33,6 +33,11 @@ function Conversationpage() {
   });
 
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_KEY;
+
+  if (!apiKey) {
+    throw new Error('GoogleGenerativeAI API key is not defined');
+  }
+
   const genAI = new GoogleGenerativeAI(apiKey);
 
   const model = genAI.getGenerativeModel({

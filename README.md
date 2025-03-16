@@ -2,7 +2,7 @@
 
 SaaS AI Platform! This project is a cutting-edge application built with Next.js, Prisma, Shadcn, Stripe, PostgreSQL, and Crisp. The platform offers multiple AI-powered modules including image generation, video generation, music generation, and conversation capabilities.
 
-Demo: https://saas-ai-liard.vercel.app/
+Demo: https://creatix-ai.vercel.app/
 
 ## Features
 

@@ -1,32 +1,31 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import Heading from '@/components/heading';
-import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { MessageSquare } from 'lucide-react';
-import { formSchema } from './constanst';
+import React, { useState, useEffect, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Heading from "@/components/heading";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { MessageSquare } from "lucide-react";
+import { formSchema } from "./constanst";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import Empty from '@/components/empty';
-import Loader from '@/components/loader';
-import { useUser } from '@clerk/nextjs';
-import Typewriter from 'typewriter-effect';
-import { increaseApiLimit, checkApiLimit } from '@/lib/api';
-import { userpromodal } from '@/hooks/user-pro-modal';
-import { SubmitHandler } from 'react-hook-form';
-import { z } from 'zod';
-
+import Empty from "@/components/empty";
+import Loader from "@/components/loader";
+import { useUser } from "@clerk/nextjs";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { increaseApiLimit, checkApiLimit } from "@/lib/api";
+import { userpromodal } from "@/hooks/user-pro-modal";
+import { SubmitHandler } from "react-hook-form";
+import { z } from "zod";
 
 type ConversationMessage = {
-  type: 'user' | 'ai';
+  type: "user" | "ai";
   message: string;
 };
 
 function Conversationpage() {
-
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
@@ -34,27 +33,22 @@ function Conversationpage() {
   const promodal = userpromodal();
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-
   type FormData = z.infer<typeof formSchema>;
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      prompt: '',
+      prompt: "",
     },
   });
 
   const apiKey = process.env.NEXT_PUBLIC_GEMINI_KEY;
-
   if (!apiKey) {
-    throw new Error('GoogleGenerativeAI API key is not defined');
+    throw new Error("GoogleGenerativeAI API key is not defined");
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-  });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const generationConfig = {
     temperature: 1,
@@ -63,7 +57,6 @@ function Conversationpage() {
     maxOutputTokens: 8192,
     responseMimeType: "text/plain",
   };
-
 
   useEffect(() => {
     const fetchSubscriptionStatus = async () => {
@@ -76,7 +69,7 @@ function Conversationpage() {
           setSubscriptionActive(false);
         }
       } catch (error) {
-        console.error('Error fetching subscription status:', error);
+        console.error("Error fetching subscription status:", error);
         setSubscriptionActive(false);
       }
     };
@@ -99,9 +92,11 @@ function Conversationpage() {
         increaseApiLimit();
       }
 
-      const userMessage: ConversationMessage = { type: 'user', message: data.prompt };
-      const newConversation = [...conversation, userMessage];
-      setConversation(newConversation);
+      const userMessage: ConversationMessage = {
+        type: "user",
+        message: data.prompt,
+      };
+      setConversation((prev) => [...prev, userMessage]);
 
       const chatSession = model.startChat({
         generationConfig,
@@ -111,21 +106,23 @@ function Conversationpage() {
       const result = await chatSession.sendMessage(data.prompt);
       const aiResponse = await result.response.text();
 
-      const aiMessage: ConversationMessage = { type: 'ai', message: aiResponse };
+      const aiMessage: ConversationMessage = {
+        type: "ai",
+        message: aiResponse,
+      };
       setConversation((prev) => [...prev, aiMessage]);
 
       setIsLoading(false);
       form.reset();
     } catch (error) {
-      console.error('Error fetching chat response:', error);
+      console.error("Error fetching chat response:", error);
       setIsLoading(false);
     }
   };
 
-
   useEffect(() => {
     if (conversation.length >= 2 && chatEndRef.current) {
-      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [conversation]);
 
@@ -144,38 +141,40 @@ function Conversationpage() {
             onSubmit={form.handleSubmit(onSubmit)}
             className="rounded-lg border w-full p-4 px-3 md:px-6 focus-within:shadow-sm grid grid-cols-12 gap-2"
           >
-            <FormField name="prompt" render={({ field }) => (
-              <FormItem className="col-span-12 lg:col-span-10">
-                <FormControl className="m-0 p-0">
-                  <Input
-                    className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
-                    placeholder="How can I help you?"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )} />
-            <Button
-              type="submit"
-              className="col-span-12 lg:col-span-2 w-full"
-            >
+            <FormField
+              name="prompt"
+              render={({ field }) => (
+                <FormItem className="col-span-12 lg:col-span-10">
+                  <FormControl className="m-0 p-0">
+                    <Input
+                      className="border-0 outline-none focus-visible:ring-0 focus-visible:ring-transparent"
+                      placeholder="How can I help you?"
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <Button type="submit" className="col-span-12 lg:col-span-2 w-full">
               Generate
             </Button>
           </form>
         </Form>
+
         <div className="space-y-4 mt-4">
           {isLoading && (
             <div className="p-8 rounded-lg w-full flex items-center justify-center bg-muted">
-              <Loader text={'Generating...'} />
+              <Loader text={"Generating..."} />
             </div>
           )}
           {!conversation.length && !isLoading && (
             <Empty label="No conversation started." />
           )}
+
           <div className="flex flex-col gap-y-4">
             {conversation.map((message, index) => (
               <React.Fragment key={index}>
-                {message.type === 'user' && (
+                {message.type === "user" && (
                   <div className="p-4 w-full flex items-center gap-x-4 rounded-lg self-end justify-end text-right">
                     <div className="text-lg whitespace-pre-wrap bg-gray-200 p-4 rounded-md">
                       {message.message}
@@ -188,7 +187,7 @@ function Conversationpage() {
                   </div>
                 )}
                 <div ref={chatEndRef} />
-                {message.type === 'ai' && (
+                {message.type === "ai" && (
                   <div className="p-4 w-full flex flex-col items-start gap-x-4 rounded-lg mb-2 self-start justify-start text-left">
                     <img
                       src="/logo.svg"
@@ -196,20 +195,9 @@ function Conversationpage() {
                       className="h-10 w-10 rounded-full mb-4"
                     />
                     <div className="text-lg whitespace-pre-wrap bg-gray-200 p-4 rounded-md">
-                      <Typewriter
-                        onInit={(typewriter) => {
-                          typewriter
-                            .typeString(message.message)
-                            .callFunction(() => {
-                              typewriter.stop();
-                            })
-                            .start();
-                        }}
-                        options={{
-                          delay: 10,
-                          cursor: ''
-                        }}
-                      />
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.message}
+                      </ReactMarkdown>
                     </div>
                   </div>
                 )}

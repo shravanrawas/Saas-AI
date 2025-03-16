@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
@@ -17,6 +17,10 @@ import { useUser } from '@clerk/nextjs';
 import Typewriter from 'typewriter-effect';
 import { increaseApiLimit, checkApiLimit } from '@/lib/api';
 import { userpromodal } from '@/hooks/user-pro-modal';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 interface Conversation {
   type: 'user' | 'ai';
@@ -184,21 +188,30 @@ function Codepage() {
                       className='h-10 w-10 rounded-full order-1 mb-4'
                     />
                     <div className='text-lg whitespace-pre-wrap break-words bg-gray-200 p-4 rounded-md order-2'>
-
-                      <Typewriter
-                        onInit={(typewriter) => {
-                          typewriter
-                            .typeString(message.message)
-                            .callFunction(() => {
-                              typewriter.stop();
-                            })
-                            .start();
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code({ node, inline, className, children, ...props }) {
+                            const match = /language-(\w+)/.exec(className || '');
+                            return !inline && match ? (
+                              <SyntaxHighlighter
+                                style={oneDark}
+                                language={match[1]}
+                                PreTag="div"
+                                {...props}
+                              >
+                                {String(children).replace(/\n$/, '')}
+                              </SyntaxHighlighter>
+                            ) : (
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            );
+                          },
                         }}
-                        options={{
-                          delay: 10,
-                          cursor: ''
-                        }}
-                      />
+                      >
+                        {message.message}
+                      </ReactMarkdown>
                     </div>
                   </>
                 )}
